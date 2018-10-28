@@ -15,6 +15,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+//Rutas o urls
 Route::post('/api/register', 'AdminController@register');
 Route::post('/api/login', 'AdminController@login');
 Route::resource('/api/egresados', 'EgresadoController');
