@@ -9,7 +9,7 @@ class Egresado extends Model
 
 	protected $table = 'egresados';
     //relacion
-    public function administrador(){
-    	return $this->belongsTo('App\Administrador', 'admin_id');
+    public function user(){
+    	return $this->belongsTo('App\User', 'admin_id');
     }
 }
