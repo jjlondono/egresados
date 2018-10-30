@@ -15,29 +15,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/hola-mundo', function(){
-	return 'Hola mundo';
-});
-
-Route::post('/hola-mundo', function(){
-	return 'hola mundo por post';
-});
-
-
-Route::get('administrador/{nombre?}/{edad?}', function($nombre = "jorge ivan", $edad = 41){
-	/*
-	return view('administrador', array(
-		"nombre" => $nombre,
-		"edad" => $edad ));*/
-
-	return view('administrador.administrador')
-				->with('nombre', $nombre)
-				->with('edad', $edad);
-//el campo nombre solo acepta letras y edad solo numeros
-})->where([
-	'nombre' => '[A-Za-z]+',
-	'edad' => '[0-9]+'
-]);
+//Rutas o urls
+Route::post('/api/register', 'AdminController@register');
+Route::post('/api/login', 'AdminController@login');
+Route::resource('/api/egresados', 'EgresadoController');
 
 
 
