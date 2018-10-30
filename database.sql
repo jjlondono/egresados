@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS apilaravel;
+CREATE DATABASE IF NOT EXISTS api;
 USE apilaravel;
 
 CREATE TABLE users(
@@ -17,19 +17,23 @@ updated_at datetime DEFAULT NULL,
 CONSTRAINT pk_users PRIMARY KEY(id)
 )ENGINE=InnoDb;
 
-CREATE TABLE cars(
+CREATE TABLE egresados(
 id 		int(255) auto_increment not null,
 user_id int(255) not null,
-title	varchar(255),
-description text,
-price	varchar(30),
-status  varchar(30),
+nombre	varchar(255),
+pais varchar(255),
+dni	varchar(100),
+email  varchar(100),
+password varchar(255),
+intereses varchar(255),
+edad varchar(255),
+genero varchar(255),
 created_at datetime DEFAULT NULL,
 updated_at datetime DEFAULT NULL,
 CONSTRAINT pk_cars PRIMARY KEY(id),
 CONSTRAINT fk_cars_users FOREIGN KEY(user_id) REFERENCES users(id)
-)ENGINE=InnoDb;CREATE DATABASE IF NOT EXISTS apilaravel;
-USE apilaravel;
+)ENGINE=InnoDb;CREATE DATABASE IF NOT EXISTS api;
+USE api;
 
 CREATE TABLE administrador(
 dni 		int(255) not null,
