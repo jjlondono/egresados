@@ -2,96 +2,119 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\JwtAuth;
 use Illuminate\Http\Request;
 use App\Http\Requests;
-use App\Helpers\JwtAuth;
+use Illuminate\Support\Facades\DB;
 use App\Egresado;
 
 class EgresadoController extends Controller
 {
 
-   public function index(Request $request){
-   	$hash = $request->header('Authorization', null);
+    public function index(){
+        $egresados = Egresado::all()->load('user');
+        return response()->json(array(
+            'egresados' => $egresados,
+            'status' => 'success'
+        ), 200);
 
-   	$jwtAuth = new JwtAuth();
-   	$checkToken = $jwtAuth->checkToken($hash);
+    }
 
-   	//comprobar si un usuario esta identificado
-   	if ($checkToken) {
-   		echo "index de egresados controler auntenticado"; die();
-   	}else {
-   		echo "index de egresados controler no autenticado"; die();
-   	}
-   
-   }
+    public function register(Request $request){
+    	//recoger las variables que nos llegan por post
+    	$json  =  $request->input('json');
+    	$params = json_decode($json);
 
-   public function store(Request $request){
-		$hash = $request->header('Authorization', null);
+    	$email  = (!is_null($json) && isset($params->email)) ? $params->email : null;
+    	$name  = (!is_null($json) && isset($params->name)) ? $params->name : null;
+    	//$user_id  = (!is_null($json) && isset($params->user_id)) ? $params->user_id : null;
+    	$pais  = (!is_null($json) && isset($params->pais)) ? $params->pais : null;
+    	$dni  = (!is_null($json) && isset($params->dni)) ? $params->dni : null;
+    	$password  = (!is_null($json) && isset($params->password)) ? $params->password : null;
+    	$intereses  = (!is_null($json) && isset($params->intereses)) ? $params->intereses : null;
+    	$edad  = (!is_null($json) && isset($params->edad)) ? $params->edad : null;
+    	$genero  = (!is_null($json) && isset($params->genero)) ? $params->genero : null;
 
-	   	$jwtAuth = new JwtAuth();
-	   	$checkToken = $jwtAuth->checkToken($hash);
+        if (!is_null($email) && !is_null($password) && !is_null($name)) {
+            # crear el usuario
+            
+            $user = new Egresado();
+            $user->email = $email;           
+            $user->name = $name;
+           // $user->user_id = $user->sub;                           
+            $user->pais = $pais; 
+            $user->dni = $dni;             
+            $user->password = $password;
+            $user->intereses = $intereses;
+            $user->edad = $edad; 
+            $user->genero = $genero;
 
-	   	//comprobar si un usuario esta identificado
-	   	if ($checkToken) {
-	   		//recoger los datos por post
-	   		$json = $request->input('json', null);
-	   		$params = json_decode(($json));
-	   		$params_array = json_decode($json, true);
-	   		//conseguir el usuario identificado
-	   		
-	   		$user = $jwtAuth->checkToken($hash, true);
+            //para cifrar la  contraseña
+            $pwd = hash('sha256', $password);
+            $user->password =  $pwd;
 
-	   		//validacion
-	   		
-	   		$validate = \Validator::make($params_array,[
-	   			'nombre' => 'required',
-	   			'pais' => 'required',
-	   			'dni' => 'required',
-	   			'email' => 'required',
-	   			'password' => 'required',
-	   			'intereses' => 'required',
-	   			'edad' => 'required',
-	   			'genero' => 'required'
-	   		]);
-	   		
+            //comprobar usuario duplicado
+            $isset_user = Egresado::where('email', '=', $email)->first();
 
-	   		if ($validate->fails()) {
-                return response()->json($validate->errors(), 400);
-            } 
-	   		
+            if (is_object($isset_user) == 0) {
+                # guardar el usuario
+                $user->save();
+                $data = array(
+                    'status' => 'success',
+                    'code' => 200,
+                    'message' => 'Ususario registrado correctamente'
+                );
+            }else{
+                //no guardar el usuario porque ya existe
+                    $data = array(
+                    'status' => 'error',
+                    'code' => 400,
+                    'message' => 'El usuario ya existe'
+                );
+            }
 
-	   		//guardar el egresado
-	   		
-   			$egresado = new Egresado();
-   			$egresado->user_id = $user->sub;
-			$egresado->nombre = $params->nombre;	
-			$egresado->pais = $params->pais; 
-			$egresado->dni = $params->dni;
-			$egresado->email = $params->email;  
-			$egresado->password = $params->password;
-			$egresado->intereses = $params->intereses;
-			$egresado->edad = $params->edad; 
-			$egresado->genero = $params->genero;
 
-			$egresado->save();
+        }else{
+            $data = array(
+                'status' => 'error',
+                'code' => 400,
+                'message' => 'Ususario no creado'
+            );
+        }
 
-			$data = array(
-				'egresado' => $egresado,
-				'status' => 'success',
-				'code' => 200,
-			);
-		
-			
+        return response()->json($data, 200);
+    }
 
-	   	}else {
-	   		//devolver error
-	   		$data = array(
-				'message' => 'Login incorrecto',
-				'status' => 'error',
-				'code' => 400,
-			);
-	   	}
-	   
-	   	return response()->json($data, 200);
-   }
+    public function login(Request $request){
+    	$jwtAuth = new JwtAuth();
+
+    	//recoger los datos por post
+    	$json = $request->input('json', null);
+    	$params = json_decode($json);
+
+    	$email = (!is_null($json) && isset($params->email)) ? $params->email : null;
+    	$password = (!is_null($json) && isset($params->password)) ? $params->password : null;
+    	$getToken = (!is_null($json) && isset($params->getToken)) ? $params->getToken : null;
+
+    	//cifrar la contraseña
+    	$pwd = hash('sha256', $password);
+
+    	if (!is_null($email) && !is_null($password) && ($getToken == null || $getToken == 'false')) {
+    		$signup = $jwtAuth->signup($email, $pwd);
+
+    		
+    	}elseif($getToken != null){
+    		$signup = $jwtAuth->signup($email, $pwd, $getToken);
+    		
+    	}else{
+    		$signup = array(
+    			'status' => 'error',
+    			'message' => 'Envia tus datos por post'
+    		);
+    	}
+
+    	return response()->json($signup, 200);
+    }
+
+
 }

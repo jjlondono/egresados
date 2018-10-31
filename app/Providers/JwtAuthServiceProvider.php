@@ -27,3 +27,5 @@ class JwtAuthServiceProvider extends ServiceProvider
         require_once app_path() . '/Helpers/JwtAuth.php';
     }
 }
+
+
