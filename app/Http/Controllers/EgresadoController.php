@@ -1,5 +1,5 @@
 <?php
-
+//guardar un egresado
 namespace App\Http\Controllers;
 
 use App\Helpers\JwtAuth;
