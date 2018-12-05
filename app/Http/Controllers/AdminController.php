@@ -10,6 +10,15 @@ use App\User;
 
 class AdminController extends Controller
 {
+    public function index(){
+        $users = User::all();
+        return response()->json(array(
+            'users' => $users,
+            'status' => 'success'
+        ), 200);
+
+    }
+
     public function register(Request $request){
     	//recoger las variables que nos llegan por post
     	$json  =  $request->input('json');
@@ -23,7 +32,10 @@ class AdminController extends Controller
     	$genero  = (!is_null($json) && isset($params->genero)) ? $params->genero : null;
     	$intereses  = (!is_null($json) && isset($params->intereses)) ? $params->intereses : null;
     	$password  = (!is_null($json) && isset($params->password)) ? $params->password : null;
-
+        $direccion  = (!is_null($json) && isset($params->direccion)) ? $params->direccion : null;
+        $telefono  = (!is_null($json) && isset($params->telefono)) ? $params->telefono : null;
+        $ciudad  = (!is_null($json) && isset($params->ciudad)) ? $params->ciudad : null;
+        $role  = (!is_null($json) && isset($params->role)) ? $params->role : null;
         if (!is_null($email) && !is_null($password) && !is_null($name)) {
             # crear el usuario
             $user = new User();
@@ -34,6 +46,10 @@ class AdminController extends Controller
             $user->edad = $edad;
             $user->genero = $genero;
             $user->intereses = $intereses;
+            $user->direccion = $direccion;
+            $user->telefono = $telefono;
+            $user->ciudad = $ciudad;
+            $user->role = $role;
 
             //para cifrar la  contraseña
             $pwd = hash('sha256', $password);
@@ -101,6 +117,92 @@ class AdminController extends Controller
 
     	return response()->json($signup, 200);
     }
+
+
+    // metodo para eliminar un administrador
+    public function destroy($id, Request $request){
+        $hash = $request->header('Authorization', null);
+        $jwtAuth = new JwtAuth();
+        $checkToken = $jwtAuth->checkToken($hash);
+
+        if ($checkToken) {
+            # Comprobar que existe el registro
+            $admin = User::find($id);
+
+            // Borrar el registro
+            $admin->delete();
+
+            // Devolver el registro
+            $data = array(
+                'admin' => $admin,
+                'status' => 'success',
+                'code' => 200
+            );
+        }else{
+            $data = array(
+                'status' => 'error',
+                'code' => 400,
+                'message' => 'Login incorrecto'
+            );
+        }
+
+        return  response()->json($data, 200);
+    }
+
+
+    //metodo para actualizar los datos de un administrador
+    public function update($id,Request $request){
+        $hash = $request->header('Authorization', null);
+        $jwtAuth = new JwtAuth();
+        $checkToken = $jwtAuth->checkToken($hash);
+
+        if ($checkToken) {
+            // Recoger parametros post
+            $json = $request->input('json', null);
+            $params = json_decode($json);
+            $params_array = json_decode($json, true);
+
+           
+
+
+            # Actualizar el registro
+            unset($params_array['id']);
+            //unset($params_array['user_id']);
+            unset($params_array['created_at']);
+            //unset($params_array['user']);
+            $admin = User::where('id', $id)->update($params_array);
+
+            $data = array(
+                'admin' => $params,
+                'status' => 'success',
+                'code' =>200
+            );
+
+        }else{
+            //devolver error
+            $data = array(
+                'admin' => 'Login incorrecto',
+                'status' => 'error',
+                'code' => 400,
+            );
+        }
+
+        return response()->json($data, 200);
+    }
+
+    //metodo para mostrar los datos de un administrador especifico
+    public function show($id){
+        $admin = User::find($id);
+
+        if (is_object($admin)) {
+            $admin = User::find($id);
+            return response()->json(array('admin' => $admin, 'status' => 'success'),200);
+        }else {
+            return response()->json(array('message' => 'El administrador no existe', 'status' => 'error'),200);
+        }
+        
+        
+    } 
 
 
 }
